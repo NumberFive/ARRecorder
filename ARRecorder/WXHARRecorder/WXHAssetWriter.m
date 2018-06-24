@@ -49,47 +49,47 @@ static NSString *const WXHVideoFilename = @"WXHARRecorder.mp4";
         weakSelf.firstSample = YES;
         
         NSError *error = nil;
-        self.writer = [AVAssetWriter assetWriterWithURL:[self outputURL]
+        weakSelf.writer = [AVAssetWriter assetWriterWithURL:[weakSelf outputURL]
                                                fileType:AVFileTypeMPEG4
                                                   error:&error];
-        if (!self.writer || error) {
+        if (!weakSelf.writer || error) {
             WRITERLOG(@"Could not create AVAssetWriter: %@", [error localizedDescription]);
             return;
         }
-        self.writer.shouldOptimizeForNetworkUse = YES;
-        self.videoInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo
-                                                         outputSettings:self.videoSettings];
-        self.videoInput.expectsMediaDataInRealTime = YES;
+        weakSelf.writer.shouldOptimizeForNetworkUse = YES;
+        weakSelf.videoInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo
+                                                         outputSettings:weakSelf.videoSettings];
+        weakSelf.videoInput.expectsMediaDataInRealTime = YES;
         
 //        UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
 //        self.videoInput.transform = TransformForDeviceOrientation(orientation);
         
         NSDictionary *attributes = @{(id)kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
-                                     (id)kCVPixelBufferWidthKey : self.videoSettings[AVVideoWidthKey],
-                                     (id)kCVPixelBufferHeightKey : self.videoSettings[AVVideoHeightKey]};
+                                     (id)kCVPixelBufferWidthKey : weakSelf.videoSettings[AVVideoWidthKey],
+                                     (id)kCVPixelBufferHeightKey : weakSelf.videoSettings[AVVideoHeightKey]};
         
-        self.pixelBufferAdaptor = [[AVAssetWriterInputPixelBufferAdaptor alloc] initWithAssetWriterInput:self.videoInput
+        weakSelf.pixelBufferAdaptor = [[AVAssetWriterInputPixelBufferAdaptor alloc] initWithAssetWriterInput:weakSelf.videoInput
                                                                              sourcePixelBufferAttributes:attributes];
-        if ([self.writer canAddInput:self.videoInput]) {
-            [self.writer addInput:self.videoInput];
+        if ([weakSelf.writer canAddInput:weakSelf.videoInput]) {
+            [weakSelf.writer addInput:weakSelf.videoInput];
         } else {
             WRITERLOG(@"Unable to add video input.");
             return;
         }
         
-        self.audioInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeAudio
-                                                         outputSettings:self.audioSettings];
-        self.audioInput.expectsMediaDataInRealTime = YES;
+        weakSelf.audioInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeAudio
+                                                         outputSettings:weakSelf.audioSettings];
+        weakSelf.audioInput.expectsMediaDataInRealTime = YES;
         
-        if ([self.writer canAddInput:self.audioInput]) {
-            [self.writer addInput:self.audioInput];
+        if ([weakSelf.writer canAddInput:weakSelf.audioInput]) {
+            [weakSelf.writer addInput:weakSelf.audioInput];
         } else {
             WRITERLOG(@"Unable to add audio input.");
         }
         _isWriting = YES;
-        self.firstSample = YES;
+        weakSelf.firstSample = YES;
         
-        if (![self.writer startWriting]) {
+        if (![weakSelf.writer startWriting]) {
             WRITERLOG(@"Failed to start writing");
         }
     });

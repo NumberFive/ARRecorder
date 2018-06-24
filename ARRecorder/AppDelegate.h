@@ -12,6 +12,6 @@
 
 @property (strong, nonatomic) UIWindow *window;
 
-
+@property (nonatomic, weak) id<CAMetalDrawable> currentSceneDrawable;
 @end
 

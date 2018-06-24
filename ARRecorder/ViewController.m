@@ -14,6 +14,8 @@
 @property (nonatomic, strong) WXHARRecorder *recorder;
 
 @property (nonatomic, strong) UIImageView *imageView;
+
+@property (nonatomic, strong) CADisplayLink *displayLink;
 @end
 
     
@@ -33,20 +35,18 @@
     self.sceneView.scene = scene;
     self.sceneView.session.delegate = self;
     
-//    self.imageView = [[UIImageView alloc] init];
-//    self.imageView.frame = CGRectMake(0, 0, 300, 300);
-//    [self.view addSubview:self.imageView];
-//    self.imageView.backgroundColor = [UIColor greenColor];
-//    self.recorder.imageView = self.imageView;
+    self.imageView = [[UIImageView alloc] init];
+    self.imageView.frame = CGRectMake(self.view.frame.size.width/2.0-150, 0, 300, 300);
+    [self.view addSubview:self.imageView];
+    self.imageView.backgroundColor = [UIColor greenColor];
     
     UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    backButton.frame = CGRectMake(0, 0, 100, 100);
+    backButton.frame = CGRectMake(self.view.frame.size.width/2.0-50, 0, 100, 100);
     [backButton setTitle:@"back" forState:UIControlStateNormal];
     backButton.backgroundColor = [UIColor brownColor];
     [backButton addTarget:self action:@selector(backButtonAction) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:backButton];
-    
-    
+        
     UIButton *setupbutton = [UIButton buttonWithType:UIButtonTypeCustom];
     [setupbutton setTitle:@"setup session" forState:UIControlStateNormal];
     setupbutton.frame = CGRectMake(0, 0, 200, 100);
@@ -62,11 +62,34 @@
     startButton.frame = CGRectMake(0, 0, 200, 100);
     startButton.center = CGPointMake(setupbutton.center.x, setupbutton.center.y+150);
     [self.view addSubview:startButton];
+    
+    
+    if ([self.sceneView.layer isKindOfClass:[CAMetalLayer class]]) {
+        NSLog(@"YES");
+        CAMetalLayer *metalLayer = (CAMetalLayer *)self.sceneView.layer;
+        metalLayer.framebufferOnly = NO;
+    } else {
+        NSLog(@"NO");
+    }
+    
 }
-
+- (CADisplayLink *)displayLink
+{
+    if (!_displayLink) {
+        _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(renderFrame)];
+        _displayLink.preferredFramesPerSecond = 30;//30帧每s
+    }
+    return _displayLink;
+}
+- (void)renderFrame
+{
+    [self.sceneView snapshot];
+}
 //first step,start session
 - (void)setupButtonAction:(UIButton *)button
 {
+//    [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    
     if (self.recorder.status == WXHARRecorderStatusUnknown) {
         [[AVAudioSession sharedInstance] requestRecordPermission:^(BOOL granted) {
             if (granted) {
@@ -111,10 +134,11 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
     
     ARWorldTrackingConfiguration *configuration = [ARWorldTrackingConfiguration new];
+    configuration.planeDetection = ARPlaneDetectionHorizontal;
     [self.sceneView.session runWithConfiguration:configuration];
 }
 
@@ -125,10 +149,10 @@
 }
 
 //暂时不支持横盘录制，会出现问题
-- (BOOL)shouldAutorotate
-{
-    return NO;
-}
+//- (BOOL)shouldAutorotate
+//{
+//    return NO;
+//}
 
 #pragma mark - Setter / Getter
 - (WXHARRecorder *)recorder

@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "HomeViewController.h"
+//#import "CAMetalLayer+ARMetalLayer.h"
 @interface AppDelegate ()
 
 @end
@@ -21,6 +22,9 @@
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.window.rootViewController = [[HomeViewController alloc] init];
     [self.window makeKeyAndVisible];
+    
+//    CAMetalLayer *layer = [CAMetalLayer alloc];
+//    [layer setupSwizzling];
     return YES;
 }
 

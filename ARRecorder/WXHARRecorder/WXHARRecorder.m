@@ -30,7 +30,9 @@
     if (self) {
         CGFloat width = [UIScreen mainScreen].bounds.size.width;
         CGFloat height = [UIScreen mainScreen].bounds.size.height;
-        self.bufferSize = CGSizeMake(width, height);
+
+        CGFloat scale = [[UIScreen mainScreen] scale];
+        self.bufferSize = CGSizeMake(width*scale, height*scale);
         
         self.recorderQueue = dispatch_queue_create("com.recorder.video.queue", NULL);
     }
@@ -146,11 +148,13 @@
 - (void)renderFrame
 {
     __weak WXHARRecorder *weakSelf = self;
-    dispatch_sync(self.recorderQueue, ^{
-        if (self.assetWriter.isWriting) {
-            CVPixelBufferRef buffer = [weakSelf createCapturePixelBuffer];
-            [self.assetWriter appendPixelBuffer:buffer];
-            CVPixelBufferRelease(buffer);
+    dispatch_async(self.recorderQueue, ^{
+        if (weakSelf.assetWriter.isWriting) {
+            @autoreleasepool{
+                CVPixelBufferRef buffer = [weakSelf createCapturePixelBuffer];
+                [weakSelf.assetWriter appendPixelBuffer:buffer];
+                CVPixelBufferRelease(buffer);
+            }
         }
     });
 }
@@ -162,8 +166,6 @@
         self.renderer.scene = scnView.scene;
 
         [self.assetWriter startWriting];
-        [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop]
-                               forMode:NSRunLoopCommonModes];
     }
 }
 
@@ -171,8 +173,8 @@
 {
     if (self.status == WXHARRecorderStatusRecording) {
         self.status = WXHARRecorderStatusCompleted;
-        [self.displayLink removeFromRunLoop:[NSRunLoop mainRunLoop]
-                                    forMode:NSRunLoopCommonModes];
+        [self.displayLink invalidate];
+        self.displayLink = nil;
         [self stopSession];
         [self.assetWriter stopWriting:hander];
     }
@@ -230,6 +232,9 @@
 didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
        fromConnection:(AVCaptureConnection *)connection
 {
+    if (self.status == WXHARRecorderStatusRecording && _displayLink == nil) {
+        [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    }
     [self.assetWriter appendSampleBuffer:sampleBuffer];
 }
 
